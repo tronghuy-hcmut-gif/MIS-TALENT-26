@@ -135,7 +135,7 @@ def main():
         with st.spinner("Đang chạy luồng 6 AI Agents..."):
             p_rep = agent_planner(raw_data)
             f_rep = agent_finance(raw_data)
-            r_rep, _ = agent_risk_compliance(raw_data)
+            r_rep = agent_risk_compliance(raw_data)
             b_rep = agent_banking_integration(raw_data)
             doc_packet = f"[TÀI CHÍNH]\n{f_rep}\n\n[RỦI RO]\n{r_rep}\n\n[NGÂN HÀNG]\n{b_rep}"
             final_decision = agent_decision(f"KẾ HOẠCH: {p_rep}\n\n{doc_packet}")
