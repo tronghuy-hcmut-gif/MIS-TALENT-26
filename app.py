@@ -30,49 +30,41 @@ st.markdown("""
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         
-        /* -------------------------------------------
-           THIẾT KẾ OVAL TABS - LIQUID GLASS
-           ------------------------------------------- */
-        /* 1. Container bọc các tab */
+        /* THIẾT KẾ OVAL TABS */
         .stTabs [data-baseweb="tab-list"] { 
             gap: 15px; 
             border-bottom: none !important; 
             background: transparent !important;
             padding: 10px 0;
         }
-        /* 2. Dáng Oval cho tab mặc định */
         .stTabs [data-baseweb="tab"] { 
             padding: 10px 24px; 
             background-color: rgba(255, 255, 255, 0.03); 
-            border-radius: 50px !important; /* Ép hình viên thuốc (Oval) */
+            border-radius: 50px !important; 
             color: #94a3b8;
             border: 1px solid rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             transition: all 0.3s ease-in-out;
         }
-        /* 3. Hiệu ứng Liquid Glass khi Tab được chọn */
         .stTabs [aria-selected="true"] { 
             background: rgba(59, 130, 246, 0.25) !important; 
             color: white !important; 
             border: 1px solid rgba(150, 200, 255, 0.4) !important;
             box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.2), 0 8px 20px rgba(59, 130, 246, 0.3) !important;
         }
-        /* 4. DIỆT CÁI GẠCH ĐỎ XẤU XÍ CỦA STREAMLIT */
         .stTabs [data-baseweb="tab-highlight"] {
             display: none !important;
         }
 
-        /* -------------------------------------------
-           LIQUID GLASS CHO METRICS & CONTAINERS
-           ------------------------------------------- */
+        /* LIQUID GLASS CHO METRICS & CONTAINERS */
         div[data-testid="metric-container"] { 
             background: rgba(255, 255, 255, 0.02); 
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1); 
             padding: 5% 10%; 
-            border-radius: 24px; /* Bo góc siêu mềm */
+            border-radius: 24px; 
             box-shadow: inset 0 2px 5px rgba(255,255,255,0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.2);
         }
 
@@ -128,13 +120,13 @@ def main():
     if "data_loaded" not in st.session_state:
         st.session_state.data_loaded = False
 
-    # GIAO DIỆN CHỜ
+    # GIAO DIỆN CHỜ (LANDING PAGE)
     if not st.session_state.data_loaded:
         st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
         col_L, col_C, col_R = st.columns([1, 2, 1])
         with col_C:
             st.markdown("<h1 style='text-align: center; color: white; text-shadow: 0 0 30px rgba(59,130,246,0.8);'>⚡ OPC COMMAND CENTER</h1>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align: center; color: #94a3b8; margin-bottom: 30px;'>Liquid Glass Multi-Agent Dashboard</p>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center; color: #94a3b8; margin-bottom: 30px;'>Multi-Agent System Dashboard</p>", unsafe_allow_html=True)
             
             uploaded_file = st.file_uploader("", type=["xlsx"])
             if uploaded_file is not None:
@@ -172,20 +164,37 @@ def main():
         m2.metric("Lực lượng Agent", "6 Chuyên gia", "Đang trực chiến")
         m3.metric("Tiến trình Task", "85% Hoàn thành", "Tốc độ xử lý +12%")
         m4.metric("Tài nguyên Token", "1,245,000", "Trong mức an toàn")
+        
         st.divider()
-        st.info("Hệ thống đã nhận diện luồng dữ liệu Excel. Các khối Liquid Glass đã sẵn sàng.")
+        col_act, col_arch = st.columns([1, 1])
+        
+        with col_act:
+            st.markdown("**🔄 Chuỗi nhiệm vụ thời gian thực (Recent Activities)**")
+            st.caption("Theo dõi tiến độ hoàn thành các tác vụ thành phần của hệ thống đa tác nhân.")
+            st.progress(100, text="Planner Agent: Đã khởi tạo cấu trúc Workflow (100%)")
+            st.progress(100, text="Data Agent: Đã bóc tách dữ liệu từ Excel (100%)")
+            st.progress(80, text="Risk Agent: Đang quét dị thường giao dịch (80%)")
+            st.progress(45, text="Finance Agent: Đang dự phóng hụt vốn dòng tiền (45%)")
+            
+        with col_arch:
+            st.markdown("**🧠 Kiến trúc Suy luận (Reasoning Framework)**")
+            st.info("""
+            **Luồng xử lý dữ liệu chuẩn:**
+            1. **Dữ liệu đầu vào (Input):** Nạp và làm sạch dữ liệu thô từ Excel.
+            2. **Điều phối viên (Orchestrator):** Tiếp nhận tín hiệu và phân rã các tập dữ liệu.
+            3. **Tầng suy luận (Agentic Layer):** 6 Agent chuyên trách độc lập phân tích dữ liệu chuyên sâu thông qua API.
+            4. **Kết xuất (Output):** Khuyến nghị quyết định, tính toán độ tin cậy và báo cáo.
+            """)
 
-    # --- TAB 2: AGENT FLEET (ĐÃ BỔ SUNG ĐỦ 6 AGENTS) ---
+    # --- TAB 2: AGENT FLEET ---
     with tab_agents:
         st.markdown("### 🤖 Đội hình Đặc nhiệm (6 Agents Fleet)")
         
-        # Hàng 1 (3 Agents)
         a1, a2, a3 = st.columns(3)
         with a1: st.success("**🎯 Planner Agent**\n\n- Đã xử lý: 420 tasks\n- Đóng góp: 25%")
         with a2: st.warning("**🛡️ Risk Agent**\n\n- Đã xử lý: 315 tasks\n- Đóng góp: 30%")
         with a3: st.info("**📊 Finance Agent**\n\n- Đã xử lý: 150 tasks\n- Đóng góp: 15%")
         
-        # Hàng 2 (3 Agents)
         st.markdown("<br>", unsafe_allow_html=True)
         a4, a5, a6 = st.columns(3)
         with a4: st.info("**🏦 Banking Agent**\n\n- Đã xử lý: 85 tasks\n- Đóng góp: 10%")
@@ -194,8 +203,8 @@ def main():
 
         st.markdown("<br>", unsafe_allow_html=True)
         z = [[1, 20, 30, 50, 1], [20, 1, 60, 80, 30], [30, 60, 1, -10, 20]]
-        fig_heat = go.Figure(data=go.Heatmap(z=z, x=['T2', 'T3', 'T4', 'T5', 'T6'], y=['Sáng', 'Chiều', 'Tối'], colorscale='Blues')) # Đổi sang màu Blues cho hợp Liquid Theme
-        fig_heat.update_layout(title="💧 Heatmap Tần suất Hoạt động (Liquid Mode)", height=280, margin=dict(t=40, b=20, l=40, r=20), template="plotly_dark", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+        fig_heat = go.Figure(data=go.Heatmap(z=z, x=['T2', 'T3', 'T4', 'T5', 'T6'], y=['Sáng', 'Chiều', 'Tối'], colorscale='Blues')) 
+        fig_heat.update_layout(title="💧 Heatmap Tần suất Hoạt động (Workload Distribution)", height=280, margin=dict(t=40, b=20, l=40, r=20), template="plotly_dark", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_heat, use_container_width=True)
 
     # --- TAB 3: POWER DASHBOARD ---
@@ -256,7 +265,7 @@ def main():
         agent_select = st.selectbox("Chọn Agent để tương tác:", ["Master Orchestrator", "Planner Agent", "Finance Agent", "Risk Agent", "Banking Agent", "Document Agent", "Decision Agent"])
         chat_container = st.container(height=300)
         with chat_container:
-            st.chat_message("assistant").write(f"Xin chào! Tôi là {agent_select}. Khối Liquid Glass đã kích hoạt, sẵn sàng nhận lệnh.")
+            st.chat_message("assistant").write(f"Xin chào! Tôi là {agent_select}. AI multi-agents đã sẵn sàng nhận lệnh.")
         prompt = st.chat_input(f"Giao task cho {agent_select}...")
         if prompt:
             with chat_container:
