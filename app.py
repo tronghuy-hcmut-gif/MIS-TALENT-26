@@ -45,7 +45,7 @@ def log_runtime_to_terminal(agent_name, input_src, output_text, next_agent):
 st.set_page_config(page_title="OPC Agentic System", page_icon="📈", layout="wide")
 
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def layer4_data_ingestion(uploaded_file):
     return {
