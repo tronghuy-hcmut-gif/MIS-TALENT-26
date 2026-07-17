@@ -151,9 +151,19 @@ def main():
             st.session_state.clear() 
             st.rerun()
 
-    # 4 Oval Tabs
-    tab_overview, tab_agents, tab_dashboard, tab_chat = st.tabs([
-        "🌐 Overview", "🤖 Agents Fleet", "📊 Power Dashboard", "💬 Office & Chat"
+    # CHẠY LUỒNG AI TRƯỚC KHI HIỂN THỊ TABS
+    if "ai_completed" not in st.session_state:
+        with st.spinner("Đang kích hoạt hệ thống Đa Tác Nhân và gọi API thời gian thực..."):
+            st.session_state.p_rep = agent_planner(raw_data)
+            st.session_state.f_rep = agent_finance(raw_data)
+            st.session_state.r_rep = agent_risk_compliance(raw_data)
+            st.session_state.b_rep = agent_banking_integration(raw_data)
+            st.session_state.final_dec = agent_decision(f"{st.session_state.p_rep}\n\n[TÀI CHÍNH]\n{st.session_state.f_rep}\n\n[RỦI RO]\n{st.session_state.r_rep}")
+            st.session_state.ai_completed = True
+
+    # 5 Oval Tabs
+    tab_overview, tab_agents, tab_analysis, tab_dashboard, tab_chat = st.tabs([
+        "🌐 Overview", "🤖 Agents Fleet", "🧠 Agent Analysis", "📊 Power Dashboard", "💬 Office & Chat"
     ])
 
     # --- TAB 1: OVERVIEW ---
@@ -207,17 +217,29 @@ def main():
         fig_heat.update_layout(title="💧 Heatmap Tần suất Hoạt động (Workload Distribution)", height=280, margin=dict(t=40, b=20, l=40, r=20), template="plotly_dark", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_heat, use_container_width=True)
 
-    # --- TAB 3: POWER DASHBOARD ---
-    with tab_dashboard:
-        if "ai_completed" not in st.session_state:
-            with st.spinner("Đang tổng hợp dữ liệu thời gian thực và gọi API..."):
-                st.session_state.p_rep = agent_planner(raw_data)
-                st.session_state.f_rep = agent_finance(raw_data)
-                st.session_state.r_rep = agent_risk_compliance(raw_data)
-                st.session_state.b_rep = agent_banking_integration(raw_data)
-                st.session_state.final_dec = agent_decision(f"{st.session_state.p_rep}\n\n[TÀI CHÍNH]\n{st.session_state.f_rep}\n\n[RỦI RO]\n{st.session_state.r_rep}")
-                st.session_state.ai_completed = True
+    # --- TAB 3: AGENT ANALYSIS (TAB MỚI) ---
+    with tab_analysis:
+        st.markdown("### 🧠 Phân tích Logic Đa Tác Nhân (Agent Reasoning)")
+        st.caption("Báo cáo giải trình từ các AI Agent chuyên trách. Nhấn vào từng mục để xem chi tiết văn bản lập luận đã được AI trích xuất.")
+        
+        st.success("**🎯 Planner Agent (Hoạch định Chiến lược):** Khởi tạo cấu trúc phân rã công việc và ma trận phê duyệt.")
+        with st.expander("📄 Xem chi tiết bản kế hoạch (Workflow Plan)"):
+            st.markdown(st.session_state.p_rep)
+            
+        st.info("**📊 Finance Agent (Phân tích Tài chính):** Đánh giá tình trạng thâm hụt dòng tiền dựa trên Cashflow và dự báo lợi nhuận.")
+        with st.expander("📄 Xem chi tiết báo cáo tài chính (Financial Analysis)"):
+            st.markdown(st.session_state.f_rep)
+            
+        st.warning("**🛡️ Risk Agent (Kiểm soát Tuân thủ):** Quét toàn bộ giao dịch, định danh các điểm nghẽn rủi ro nội bộ (Risk Score >= 85).")
+        with st.expander("📄 Xem chi tiết rà soát tuân thủ (Risk & Compliance)"):
+            st.markdown(st.session_state.r_rep)
+            
+        st.success("**🏦 Banking Agent (Tích hợp Ngoại vi):** Đối chiếu sản phẩm ngân hàng, đề xuất giải pháp tài trợ vốn tối ưu nhất.")
+        with st.expander("📄 Xem chi tiết khuyến nghị API (Banking Integration)"):
+            st.markdown(st.session_state.b_rep)
 
+    # --- TAB 4: POWER DASHBOARD ---
+    with tab_dashboard:
         layout_update = dict(template="plotly_dark", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=30, b=10), height=260)
         cash_col = df_cf.columns[-2]
         df_cf[cash_col] = pd.to_numeric(df_cf[cash_col].astype(str).str.replace(',', ''), errors='coerce')
@@ -259,7 +281,7 @@ def main():
         btn1.button("✅ DUYỆT (Approve)", use_container_width=True, type="primary")
         btn2.button("❌ TỪ CHỐI (Reject)", use_container_width=True)
 
-    # --- TAB 4: CHAT & OFFICE ---
+    # --- TAB 5: CHAT & OFFICE ---
     with tab_chat:
         st.markdown("### 💬 Agent Command Line")
         agent_select = st.selectbox("Chọn Agent để tương tác:", ["Master Orchestrator", "Planner Agent", "Finance Agent", "Risk Agent", "Banking Agent", "Document Agent", "Decision Agent"])
