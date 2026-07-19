@@ -104,12 +104,36 @@ def agent_planner(data_bundle):
     response = client.chat.completions.create(model="gpt-4o", response_format={ "type": "json_object" }, messages=[{"role": "system", "content": "Trả về JSON: { 'task_breakdown': '...', 'approval_gates': '...', 'workflow_plan': '...' } Tiếng Việt."}, {"role": "user", "content": data_bundle['contracts']}], temperature=0.1)
     parsed = json.loads(response.choices[0].message.content)
     return f"**Mục tiêu:** {parsed.get('task_breakdown', '')}\n\n**Workflow:** {parsed.get('workflow_plan', '')}"
+
 def agent_finance(data_bundle):
     return client.chat.completions.create(model="gpt-4o", messages=[{"role": "system", "content": "Tóm tắt ngắn 2 đoạn: Phân tích hụt vốn & Đề xuất giải pháp. Tiếng Việt."}, {"role": "user", "content": data_bundle['cashflow']}], temperature=0.1).choices[0].message.content
+
 def agent_risk_compliance(data_bundle):
     return client.chat.completions.create(model="gpt-4o", messages=[{"role": "system", "content": "Phân tích rủi ro ngắn gọn. Báo cáo giao dịch >= 85 điểm. Tiếng Việt."}, {"role": "user", "content": f"Data: {data_bundle['txn']}"}], temperature=0.1).choices[0].message.content
+
 def agent_banking_integration(data_bundle):
-    return client.chat.completions.create(model="gpt-4o", messages=[{"role": "system", "content": "Gợi ý 1 ngân hàng tốt nhất. Rất ngắn gọn. Tiếng Việt."}, {"role": "user", "content": data_bundle['bank_prod']}], temperature=0.1).choices[0].message.content
+    system_prompt = """
+    Bạn là Giám đốc Quan hệ Khách hàng Doanh nghiệp (Corporate Banking Expert).
+    Nhiệm vụ của bạn là phân tích danh sách sản phẩm ngân hàng (data) và đề xuất đối tác tài trợ vốn tối ưu nhất cho công ty.
+    
+    Hãy viết một báo cáo phân tích chi tiết, trình bày bằng Markdown với cấu trúc sau:
+    - 🏆 **Ngân hàng đề xuất:** Chọn ra 1 ngân hàng tốt nhất.
+    - 📊 **Cơ sở lựa chọn:** Phân tích lý do dựa trên Lãi suất, Hạn mức tín dụng, hoặc Thời gian giải ngân.
+    - ⚠️ **Rủi ro & Đánh đổi:** Điểm yếu của gói vay này là gì?
+    - 💡 **Hành động tiếp theo:** Doanh nghiệp cần chuẩn bị hồ sơ gì để chốt deal này?
+    
+    Ngôn từ chuyên nghiệp, sắc bén, lập luận chặt chẽ.
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o", 
+        messages=[
+            {"role": "system", "content": system_prompt}, 
+            {"role": "user", "content": f"Dữ liệu ngân hàng: {data_bundle['bank_prod']}"}
+        ], 
+        temperature=0.3
+    )
+    return response.choices[0].message.content
+
 def agent_decision(full_packet):
     return client.chat.completions.create(model="gpt-4o", messages=[{"role": "system", "content": "Đóng vai Tổng Giám Đốc. Phán quyết DUYỆT hoặc TỪ CHỐI. Trình bày max 4 câu sắc bén. Kèm Confidence Score %."}, {"role": "user", "content": full_packet}], temperature=0.1).choices[0].message.content
 
@@ -217,7 +241,7 @@ def main():
         fig_heat.update_layout(title="💧 Heatmap Tần suất Hoạt động (Workload Distribution)", height=280, margin=dict(t=40, b=20, l=40, r=20), template="plotly_dark", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_heat, use_container_width=True)
 
-    # --- TAB 3: AGENT ANALYSIS (TAB MỚI) ---
+    # --- TAB 3: AGENT ANALYSIS ---
     with tab_analysis:
         st.markdown("### 🧠 Phân tích Logic Đa Tác Nhân (Agent Reasoning)")
         st.caption("Báo cáo giải trình từ các AI Agent chuyên trách. Nhấn vào từng mục để xem chi tiết văn bản lập luận đã được AI trích xuất.")
@@ -284,15 +308,49 @@ def main():
     # --- TAB 5: CHAT & OFFICE ---
     with tab_chat:
         st.markdown("### 💬 Agent Command Line")
-        agent_select = st.selectbox("Chọn Agent để tương tác:", ["Master Orchestrator", "Planner Agent", "Finance Agent", "Risk Agent", "Banking Agent", "Document Agent", "Decision Agent"])
-        chat_container = st.container(height=300)
+        
+        agent_select = st.selectbox(
+            "Chọn Agent để tương tác:", 
+            ["Master Orchestrator", "Planner Agent", "Finance Agent", "Risk Agent", "Banking Agent", "Document Agent", "Decision Agent"]
+        )
+        
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+            
+        if st.button("🧹 Xóa hội thoại"):
+            st.session_state.chat_history = []
+            st.rerun()
+
+        chat_container = st.container(height=400)
+        
         with chat_container:
-            st.chat_message("assistant").write(f"Xin chào! Tôi là {agent_select}. AI multi-agents đã sẵn sàng nhận lệnh.")
+            st.chat_message("assistant").write(f"Xin chào! Tôi là **{agent_select}**. Dữ liệu hệ thống đã nạp. Tôi có thể giúp gì cho bạn?")
+            
+            for msg in st.session_state.chat_history:
+                st.chat_message(msg["role"]).write(msg["content"])
+
         prompt = st.chat_input(f"Giao task cho {agent_select}...")
+        
         if prompt:
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
             with chat_container:
                 st.chat_message("user").write(prompt)
-                st.chat_message("assistant").write("Đang xử lý yêu cầu... (Tính năng chờ kết nối API)")
+                
+                with st.chat_message("assistant"):
+                    with st.spinner(f"Đang gọi {agent_select}..."):
+                        sys_context = f"Bạn là {agent_select} trong hệ thống OPC Command Center. Hãy trả lời câu hỏi của người dùng một cách chuyên nghiệp. Nếu cần số liệu, hãy giả định dựa trên bối cảnh tài chính."
+                        
+                        chat_response = client.chat.completions.create(
+                            model="gpt-4o",
+                            messages=[
+                                {"role": "system", "content": sys_context},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.4
+                        ).choices[0].message.content
+                        
+                        st.write(chat_response)
+                        st.session_state.chat_history.append({"role": "assistant", "content": chat_response})
 
 if __name__ == "__main__":
     main()
