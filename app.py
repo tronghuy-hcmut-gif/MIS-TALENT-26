@@ -265,11 +265,17 @@ def main():
     # --- TAB 4: POWER DASHBOARD ---
     with tab_dashboard:
         layout_update = dict(template="plotly_dark", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=30, b=10), height=260)
+        
+        # Xử lý dữ liệu an toàn với fillna(0)
         cash_col = df_cf.columns[-2]
-        df_cf[cash_col] = pd.to_numeric(df_cf[cash_col].astype(str).str.replace(',', ''), errors='coerce')
+        df_cf[cash_col] = pd.to_numeric(df_cf[cash_col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+        
         risk_col = df_txn.columns[-1]
-        df_txn[risk_col] = pd.to_numeric(df_txn[risk_col], errors='coerce')
+        df_txn[risk_col] = pd.to_numeric(df_txn[risk_col], errors='coerce').fillna(0)
         df_txn['Nhãn'] = df_txn[risk_col].apply(lambda x: 'Nguy hiểm' if x >= 85 else 'An toàn')
+        
+        # Tạo cột kích thước an toàn cho bong bóng (luôn >= 1)
+        df_txn['BubbleSize'] = df_txn[risk_col].apply(lambda x: max(x, 1))
 
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -290,7 +296,8 @@ def main():
         st.markdown("<br>", unsafe_allow_html=True)
         c4, c5 = st.columns([2, 1])
         with c4:
-            fig_scatter = px.scatter(df_txn, x=df_txn.columns[0], y=risk_col, color='Nhãn', size=risk_col, title="📍 Phân tán Rủi ro (Anomaly Detection)", color_discrete_map={'Nguy hiểm': '#ff4b4b', 'An toàn': '#3b82f6'})
+            # Gán size='BubbleSize' để tránh lỗi Scatter Plot
+            fig_scatter = px.scatter(df_txn, x=df_txn.columns[0], y=risk_col, color='Nhãn', size='BubbleSize', title="📍 Phân tán Rủi ro (Anomaly Detection)", color_discrete_map={'Nguy hiểm': '#ff4b4b', 'An toàn': '#3b82f6'})
             fig_scatter.update_layout(**layout_update)
             st.plotly_chart(fig_scatter, use_container_width=True, config={'displayModeBar': False})
         with c5:
@@ -309,14 +316,17 @@ def main():
     with tab_chat:
         st.markdown("### 💬 Agent Command Line")
         
+        # Chọn Agent
         agent_select = st.selectbox(
             "Chọn Agent để tương tác:", 
             ["Master Orchestrator", "Planner Agent", "Finance Agent", "Risk Agent", "Banking Agent", "Document Agent", "Decision Agent"]
         )
         
+        # Tạo vùng chứa lịch sử chat
         if "chat_history" not in st.session_state:
             st.session_state.chat_history = []
             
+        # Nút xóa lịch sử chat khi đổi Agent
         if st.button("🧹 Xóa hội thoại"):
             st.session_state.chat_history = []
             st.rerun()
@@ -324,18 +334,23 @@ def main():
         chat_container = st.container(height=400)
         
         with chat_container:
+            # Lời chào mặc định
             st.chat_message("assistant").write(f"Xin chào! Tôi là **{agent_select}**. Dữ liệu hệ thống đã nạp. Tôi có thể giúp gì cho bạn?")
             
+            # Hiển thị lịch sử chat
             for msg in st.session_state.chat_history:
                 st.chat_message(msg["role"]).write(msg["content"])
 
+        # Ô nhập lệnh
         prompt = st.chat_input(f"Giao task cho {agent_select}...")
         
         if prompt:
+            # Hiện câu hỏi của user
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             with chat_container:
                 st.chat_message("user").write(prompt)
                 
+                # Gọi API OpenAI để Agent trả lời trực tiếp
                 with st.chat_message("assistant"):
                     with st.spinner(f"Đang gọi {agent_select}..."):
                         sys_context = f"Bạn là {agent_select} trong hệ thống OPC Command Center. Hãy trả lời câu hỏi của người dùng một cách chuyên nghiệp. Nếu cần số liệu, hãy giả định dựa trên bối cảnh tài chính."
