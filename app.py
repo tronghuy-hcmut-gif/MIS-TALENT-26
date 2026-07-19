@@ -302,8 +302,24 @@ def main():
             st.plotly_chart(fig_scatter, use_container_width=True, config={'displayModeBar': False})
         with c5:
             avg_risk = df_txn[risk_col].mean()
-            fig_gauge = go.Figure(go.Indicator(mode = "gauge+number", value = avg_risk, title = {'text': "🌡️ Áp lực Rủi ro"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#ff4b4b" if avg_risk > 60 else "#3b82f6"}}))
-            fig_gauge.update_layout(template="plotly_dark", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=20, r=20, t=50, b=20), height=260)
+            fig_gauge = go.Figure(go.Indicator(
+                mode="gauge+number", 
+                value=avg_risk, 
+                title={'text': "🌡️ Áp lực Rủi ro"}, 
+                domain={'x': [0, 1], 'y': [0, 1]},
+                number={'font': {'size': 36}, 'valueformat': '.1f'},
+                gauge={
+                    'axis': {'range': [0, 100]}, 
+                    'bar': {'color': "#ff4b4b" if avg_risk > 60 else "#3b82f6"}
+                }
+            ))
+            fig_gauge.update_layout(
+                template="plotly_dark", 
+                plot_bgcolor="rgba(0,0,0,0)", 
+                paper_bgcolor="rgba(0,0,0,0)", 
+                margin=dict(l=20, r=20, t=40, b=10), 
+                height=260
+            )
             st.plotly_chart(fig_gauge, use_container_width=True, config={'displayModeBar': False})
 
         st.markdown("### 🎯 Thẻ Quyết định (Decision Card)")
