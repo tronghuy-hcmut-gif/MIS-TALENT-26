@@ -122,7 +122,7 @@ def agent_banking_integration(data_bundle):
     - ⚠️ **Rủi ro & Đánh đổi:** Điểm yếu của gói vay này là gì?
     - 💡 **Hành động tiếp theo:** Doanh nghiệp cần chuẩn bị hồ sơ gì để chốt deal này?
     
-    Ngôn từ chuyên nghiệp, sắc bén, lập luận chặt chẽ.
+    Ngôn từ chuyên nghiệp, sắc bén, lập luận chặt sửa.
     """
     response = client.chat.completions.create(
         model="gpt-4o", 
@@ -305,9 +305,9 @@ def main():
             fig_gauge = go.Figure(go.Indicator(
                 mode="gauge+number", 
                 value=avg_risk, 
-                title={'text': "🌡️ Áp lực Rủi ro"}, 
+                title={'text': "🌡️ Áp lực Rủi ro", 'font': {'size': 22}}, # Cập nhật font size tiêu đề
                 domain={'x': [0, 1], 'y': [0, 1]},
-                number={'font': {'size': 36}, 'valueformat': '.1f'},
+                number={'font': {'size': 50}, 'valueformat': '.1f'}, # Cập nhật font size con số
                 gauge={
                     'axis': {'range': [0, 100]}, 
                     'bar': {'color': "#ff4b4b" if avg_risk > 60 else "#3b82f6"}
@@ -361,22 +361,24 @@ def main():
         prompt = st.chat_input(f"Giao task cho {agent_select}...")
         
         if prompt:
-            # Hiện câu hỏi của user
+            # Hiện câu hỏi của user và lưu vào history
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             with chat_container:
                 st.chat_message("user").write(prompt)
                 
-                # Gọi API OpenAI để Agent trả lời trực tiếp
+                # Gọi API OpenAI
                 with st.chat_message("assistant"):
                     with st.spinner(f"Đang gọi {agent_select}..."):
                         sys_context = f"Bạn là {agent_select} trong hệ thống OPC Command Center. Hãy trả lời câu hỏi của người dùng một cách chuyên nghiệp. Nếu cần số liệu, hãy giả định dựa trên bối cảnh tài chính."
                         
+                        # Cập nhật: Truyền toàn bộ lịch sử hội thoại lên API để AI có ngữ cảnh
+                        api_messages = [{"role": "system", "content": sys_context}]
+                        for m in st.session_state.chat_history:
+                            api_messages.append({"role": m["role"], "content": m["content"]})
+                        
                         chat_response = client.chat.completions.create(
                             model="gpt-4o",
-                            messages=[
-                                {"role": "system", "content": sys_context},
-                                {"role": "user", "content": prompt}
-                            ],
+                            messages=api_messages,
                             temperature=0.4
                         ).choices[0].message.content
                         
